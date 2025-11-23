@@ -1,0 +1,458 @@
+================================================================================
+APVV - AI-Powered PPE Violation Detection System
+Complete Step-by-Step Project Guide
+================================================================================
+
+PROJECT OVERVIEW
+================
+APVV is a real-time PPE (Personal Protective Equipment) detection system that uses
+AI computer vision to monitor safety gear compliance. The system detects helmets
+and safety vests in live video feeds and alerts when violations occur.
+
+TECHNOLOGY STACK
+================
+- Backend: Python 3.x + FastAPI + WebSocket + OpenCV + YOLOv8
+- Frontend: React 18 + Vite + Tailwind CSS + WebSocket
+- AI Model: YOLOv8 Nano for person detection + custom color-based PPE detection
+- Real-time Communication: WebSocket for live video streaming
+
+================================================================================
+PROJECT REQUIREMENTS & DEPENDENCIES
+================================================================================
+
+SYSTEM REQUIREMENTS
+-------------------
+- Python 3.8+
+- Node.js 16+
+- Webcam or IP camera
+- Minimum 4GB RAM (8GB recommended)
+- GPU optional (CPU works but slower)
+
+BACKEND DEPENDENCIES (requirements.txt)
+---------------------------------------
+fastapi              # Web framework
+uvicorn[standard]    # ASGI server
+ultralytics          # YOLOv8 AI models
+opencv-python        # Computer vision
+numpy               # Numerical computing
+pillow              # Image processing
+python-multipart    # File uploads
+
+FRONTEND DEPENDENCIES (package.json)
+------------------------------------
+react               # UI framework
+react-dom           # React rendering
+@vitejs/plugin-react # Vite React plugin
+tailwindcss         # CSS framework
+autoprefixer        # CSS processing
+postcss            # CSS processing
+eslint             # Code linting
+
+================================================================================
+PROJECT FILE STRUCTURE
+================================================================================
+
+apvv-project/
+├── TODO.md                          # Project tasks and progress
+├── yolov8n.pt                      # YOLOv8 Nano model weights
+├── apvv-backend/
+│   ├── ppe_detection_backend.py    # Main FastAPI server
+│   ├── requirements.txt            # Python dependencies
+│   └── yolov8n.pt                  # Model weights (copy)
+└── apvv-frontend/
+    ├── index.html                  # HTML entry point
+    ├── package.json                # Node dependencies
+    ├── vite.config.js              # Vite configuration
+    ├── tailwind.config.js          # Tailwind CSS config
+    ├── postcss.config.cjs          # PostCSS config
+    ├── eslint.config.js            # ESLint config
+    └── src/
+        ├── main.jsx                # React entry point
+        ├── App.jsx                 # Main React component
+        ├── index.css               # Global styles
+        └── assets/                 # Static assets
+            ├── react.svg
+            └── vite.svg
+
+================================================================================
+STEP-BY-STEP DEVELOPMENT PROCESS
+================================================================================
+
+PHASE 1: PROJECT SETUP & INITIALIZATION
+========================================
+
+Step 1.1: Create Project Directory Structure
+-------------------------------------------
+1. Create main project folder: `apvv-project/`
+2. Create backend folder: `apvv-project/apvv-backend/`
+3. Create frontend folder: `apvv-project/apvv-frontend/`
+4. Initialize git repository: `git init`
+
+Step 1.2: Backend Setup (Python/FastAPI)
+----------------------------------------
+1. Create virtual environment:
+   cd apvv-project/apvv-backend
+   python -m venv venv
+   venv\Scripts\activate  # Windows
+   # source venv/bin/activate  # Linux/Mac
+
+2. Install dependencies:
+   pip install fastapi uvicorn[standard] ultralytics opencv-python numpy pillow python-multipart
+
+3. Create requirements.txt with installed packages
+
+Step 1.3: Frontend Setup (React/Vite)
+-------------------------------------
+1. Initialize Vite React project:
+   cd apvv-project/apvv-frontend
+   npm create vite@latest . -- --template react --yes
+
+2. Install additional dependencies:
+   npm install tailwindcss postcss autoprefixer lucide-react
+   npm install -D @types/react @types/react-dom eslint eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh
+
+3. Initialize Tailwind CSS:
+   npx tailwindcss init -p
+
+4. Configure Tailwind (tailwind.config.js):
+   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"]
+
+5. Add Tailwind directives to index.css:
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+
+PHASE 2: BACKEND DEVELOPMENT
+============================
+
+Step 2.1: AI Model Setup
+------------------------
+1. Download YOLOv8 Nano model (yolov8n.pt) from Ultralytics
+2. Place model file in both backend and root directories
+
+Step 2.2: Core Detection Classes
+--------------------------------
+1. Create PPEDetector class:
+   - Initialize YOLOv8 model for person detection
+   - Define color ranges for helmet/vest detection (HSV)
+   - Implement detect_persons() method
+   - Implement check_helmet() and check_vest() methods
+   - Create detect_ppe() main detection function
+   - Add draw_detections() for visualization
+
+2. Create CameraManager class:
+   - Handle camera initialization and capture
+   - Manage camera start/stop operations
+   - Implement frame reading with error handling
+
+Step 2.3: FastAPI Application Setup
+-----------------------------------
+1. Import required modules:
+   - FastAPI, WebSocket, CORSMiddleware
+   - OpenCV, NumPy, Ultralytics
+   - Threading, Queue, Time
+
+2. Configure CORS for frontend communication
+
+3. Set up global variables:
+   - Camera settings (resolution, FPS)
+   - Detection thresholds
+   - Frame and result queues
+   - Active connections list
+
+Step 2.4: Video Processing Thread
+---------------------------------
+1. Create process_frames() function:
+   - Run in background thread
+   - Read frames from camera
+   - Process every 2nd frame for performance
+   - Run PPE detection on frames
+   - Draw bounding boxes and labels
+   - Encode frames to JPEG (80% quality)
+   - Put results in queue for WebSocket transmission
+
+Step 2.5: WebSocket Implementation
+----------------------------------
+1. Create /ws/video endpoint:
+   - Accept WebSocket connections
+   - Track active connections
+   - Send processed frames with detections
+   - Send at ~15 FPS for smooth performance
+   - Handle disconnections gracefully
+
+Step 2.6: REST API Endpoints
+----------------------------
+1. GET / - Root endpoint with service status
+2. POST /camera/start - Start camera with optional camera_id
+3. POST /camera/stop - Stop camera capture
+4. GET /camera/status - Get camera status
+5. POST /detect/image - Upload and process single image
+6. GET /alerts/summary - Get alerts summary (placeholder)
+
+Step 2.7: Main Server Startup
+-----------------------------
+1. Add main block with uvicorn server
+2. Display startup information and endpoints
+3. Run on 0.0.0.0:8000
+
+PHASE 3: FRONTEND DEVELOPMENT
+=============================
+
+Step 3.1: React Component Structure
+-----------------------------------
+1. Create CVMonitoringApp component with state management:
+   - isProcessing: Camera/streaming status
+   - selectedCamera: Current camera selection
+   - alerts: Array of violation alerts
+   - currentFrame: Base64 encoded frame data
+   - detections: Current frame detections
+   - connectionStatus: WebSocket connection state
+
+2. Set up refs for:
+   - WebSocket connection
+   - Canvas for drawing detections
+   - Image element for frame display
+   - Animation frame handling
+
+Step 3.2: WebSocket Integration
+-------------------------------
+1. Implement connectWebSocket() function:
+   - Create WebSocket connection to ws://localhost:8000/ws/video
+   - Handle connection states (connecting, connected, error, disconnected)
+   - Parse incoming messages with frame and detection data
+   - Update component state with new data
+   - Generate alerts for PPE violations
+
+2. Add alert deduplication logic:
+   - Check for similar detections within time/position thresholds
+   - Prevent duplicate alerts for same violations
+
+Step 3.3: Camera Controls
+-------------------------
+1. Implement startCamera() and stopCamera() functions:
+   - Make HTTP requests to backend REST endpoints
+   - Handle success/error responses
+   - Update processing state
+
+2. Create toggleProcessing() for play/pause functionality
+
+Step 3.4: Canvas Drawing System
+-------------------------------
+1. Implement useEffect for canvas updates:
+   - Use requestAnimationFrame for smooth rendering
+   - Set canvas dimensions to match video frame
+   - Draw bounding boxes with compliance-based colors
+   - Draw labels (COMPLIANT/VIOLATION)
+   - Display PPE status (helmet/vest detection)
+
+Step 3.5: UI Components
+-----------------------
+1. Camera Selection Dropdown:
+   - Support multiple cameras (webcam, USB camera)
+   - Disable during processing
+
+2. Control Buttons:
+   - Start/Stop Detection button
+   - Clear Data button
+
+3. Status Indicators:
+   - Camera status (Active/Stopped)
+   - Backend connection status
+   - Live indicator during processing
+
+4. Video Display Area:
+   - Image element for video feed
+   - Overlay canvas for detections
+   - Loading states and placeholders
+
+5. Alerts Panel:
+   - Real-time violation alerts
+   - Alert details (helmet/vest status, confidence, timestamp)
+   - Action buttons (View Details, Acknowledge)
+
+6. Statistics Dashboard:
+   - Total detections count
+   - Violations count
+   - Compliant count
+   - Total alerts count
+
+Step 3.6: Styling with Tailwind CSS
+------------------------------------
+1. Dark theme with gradient backgrounds
+2. Responsive grid layout
+3. Glassmorphism effects with backdrop-blur
+4. Color-coded status indicators
+5. Hover effects and transitions
+
+PHASE 4: PERFORMANCE OPTIMIZATIONS
+===================================
+
+Step 4.1: Backend Optimizations (COMPLETED)
+-------------------------------------------
+1. Frame Rate Limiting:
+   - Process every 2nd frame instead of every frame
+   - Reduces CPU load by ~50%
+
+2. Queue Management:
+   - Implement frame_queue and result_queue with maxsize=5
+   - Prevents memory overflow during processing delays
+
+3. WebSocket Frequency Control:
+   - Send frames at ~15 FPS instead of camera FPS
+   - Reduces network bandwidth and frontend processing
+
+Step 4.2: Frontend Optimizations (COMPLETED)
+--------------------------------------------
+1. WebSocket Message Throttling:
+   - Process messages efficiently without blocking UI
+
+2. RequestAnimationFrame for Canvas:
+   - Smooth canvas updates synchronized with browser refresh rate
+
+3. Canvas Sizing Fix:
+   - Match canvas dimensions to actual video frame size
+   - Prevents distortion and improves detection overlay accuracy
+
+PHASE 5: TESTING & DEPLOYMENT
+==============================
+
+Step 5.1: Backend Testing
+-------------------------
+1. Start backend server:
+   cd apvv-project/apvv-backend
+   python ppe_detection_backend.py
+
+2. Test endpoints with tools like Postman or curl:
+   - GET http://localhost:8000/
+   - POST http://localhost:8000/camera/start
+   - WebSocket connection to ws://localhost:8000/ws/video
+
+Step 5.2: Frontend Testing
+--------------------------
+1. Start frontend development server:
+   cd apvv-project/apvv-frontend
+   npm run dev
+
+2. Open browser to http://localhost:5173
+3. Test camera connection and PPE detection
+4. Verify real-time alerts and statistics
+
+Step 5.3: Integration Testing
+-----------------------------
+1. Start both backend and frontend
+2. Test complete workflow:
+   - Camera startup
+   - Video streaming
+   - PPE detection
+   - Alert generation
+   - UI responsiveness
+
+Step 5.4: Performance Testing (PENDING)
+---------------------------------------
+1. Test with different camera resolutions
+2. Monitor CPU/memory usage
+3. Test with multiple simultaneous connections
+4. Verify detection accuracy with various PPE types
+
+================================================================================
+CURRENT PROJECT STATUS & TODO ITEMS
+================================================================================
+
+COMPLETED TASKS
+===============
+✓ Backend Optimizations
+  ✓ Add frame rate limiting (process every 2nd frame)
+  ✓ Optimize queue handling to prevent overflow
+  ✓ Adjust WebSocket sending frequency
+
+✓ Frontend Optimizations
+  ✓ Throttle WebSocket message processing
+  ✓ Use requestAnimationFrame for canvas updates
+  ✓ Fix canvas sizing to match video dimensions
+
+PENDING TASKS
+=============
+□ Testing
+  □ Test application performance and video feed smoothness
+  □ Verify detection overlays appear correctly on video
+
+================================================================================
+HOW TO RUN THE PROJECT
+================================================================================
+
+Prerequisites:
+1. Python 3.8+ installed
+2. Node.js 16+ installed
+3. Webcam or IP camera available
+
+Step 1: Backend Setup
+---------------------
+cd apvv-project/apvv-backend
+python -m venv venv
+venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+
+Step 2: Frontend Setup
+----------------------
+cd ../apvv-frontend
+npm install
+
+Step 3: Download AI Model
+-------------------------
+# Download yolov8n.pt from https://github.com/ultralytics/ultralytics
+# Place in both apvv-backend/ and apvv-project/ directories
+
+Step 4: Start Backend
+---------------------
+cd apvv-project/apvv-backend
+python ppe_detection_backend.py
+# Server starts on http://localhost:8000
+
+Step 5: Start Frontend
+----------------------
+cd ../apvv-frontend
+npm run dev
+# Frontend starts on http://localhost:5173
+
+Step 6: Use the Application
+---------------------------
+1. Open http://localhost:5173 in browser
+2. Click "Start Detection" to begin monitoring
+3. Ensure camera permissions are granted
+4. View real-time PPE detection and alerts
+
+================================================================================
+TROUBLESHOOTING GUIDE
+================================================================================
+
+Common Issues:
+1. "Cannot connect to backend" - Ensure Python server is running on port 8000
+2. "Camera not found" - Check camera index (0 for default webcam)
+3. "Model not found" - Ensure yolov8n.pt is in the correct directory
+4. "WebSocket connection failed" - Check firewall and port availability
+
+Performance Tips:
+- Use GPU if available for faster detection
+- Lower camera resolution for better performance
+- Close other applications using camera
+- Monitor system resources during operation
+
+================================================================================
+FUTURE ENHANCEMENTS
+================================================================================
+
+Potential Improvements:
+1. Database integration for alert history
+2. User authentication and role-based access
+3. Multiple camera support with grid view
+4. Advanced PPE detection models
+5. Alert notifications (email, SMS)
+6. Historical analytics and reporting
+7. Mobile-responsive design
+8. API documentation with Swagger/OpenAPI
+9. Docker containerization
+10. Cloud deployment options
+
+================================================================================
+END OF GUIDE
+================================================================================
